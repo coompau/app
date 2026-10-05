@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    
+<!-- Archivo Manifest -->
+<link rel="manifest" href="manifest.json">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Meta etiquetas para PWA Móvil -->
+    <meta name="theme-color" content="#008752">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Portal COOMPAU">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
+
+<!-- Registro del Service Worker -->
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js')
+        .then(reg => {
+          // Escuchar si hay una actualización del Service Worker en el servidor
+          reg.onupdatefound = () => {
+            const installingWorker = reg.installing;
+            installingWorker.onstatechange = () => {
+              if (installingWorker.state === 'installed') {
+                if (navigator.serviceWorker.controller) {
+                  // Notificar que hay nueva versión disponible
+                  console.log('Nueva versión detectada. Actualizando...');
+                  window.location.reload();
+                }
+              }
+            };
+          };
+        })
+        .catch(err => console.error('Error al registrar Service Worker:', err));
+    });
+  }
+</script>
+
+
+
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        :root {
+            --primary-color: #008752;
+            --primary-dark: #006b40;
+            --primary-light: #e6f3ed;
+            --accent-gold: #C29B38;
+            --bg-body: #f4f6f8;
+            --card-bg: #ffffff;
+            --input-bg: #f0f1f3;
+            --text-main: #2b2b2b;
+            --text-muted: #666666;
+            --border-color: #e2e8f0;
+            --radius-main: 12px;
+            --radius-inner: 8px;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            --transition: all 0.25s ease;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Línea superior con los colores institucionales */
+        .top-accent {
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary-color) 70%, var(--accent-gold) 30%);
+            width: 100%;
+        }
+
+        /* Encabezado minimalista sin menú */
+        header {
+            background-color: var(--card-bg);
+            border-bottom: 1px solid var(--border-color);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+        }
+
+        .header-container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 0.85rem 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .brand-logo {
+            width: 40px;
+            height: 40px;
+            background-color: var(--input-bg);
+            border: 1px dashed #cccccc;
+            border-radius: var(--radius-inner);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            flex-shrink: 0;
+        }
+
+        .brand-title h1 {
+            font-size: 1.1rem;
+            color: var(--text-main);
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        .brand-title h1 span {
+            color: var(--primary-color);
+        }
+
+        .brand-title p {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        /* Contenido Principal */
+        main {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 1.5rem 1rem;
+            width: 100%;
+            flex: 1;
+        }
+
+        /* Card de Bienvenida y Buscador */
+        .hero-card {
+            background: var(--card-bg);
+            border-radius: var(--radius-main);
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-color);
+            margin-bottom: 1.5rem;
+        }
+
+        .hero-card h2 {
+            font-size: 1.2rem;
+            font-weight: 700;
+        }
+
+        .hero-card p {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-top: 0.2rem;
+        }
+
+        .search-box {
+            position: relative;
+            margin-top: 1rem;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 0.8rem 1rem 0.8rem 2.8rem;
+            background-color: var(--input-bg);
+            border: 1px solid transparent;
+            border-radius: var(--radius-inner);
+            font-size: 0.9rem;
+            color: var(--text-main);
+            outline: none;
+            transition: var(--transition);
+        }
+
+        .search-box input:focus {
+            border-color: var(--primary-color);
+            background-color: #ffffff;
+            box-shadow: 0 0 0 3px rgba(0, 135, 82, 0.12);
+        }
+
+        .search-box i {
+            position: absolute;
+            left: 0.9rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            width: 18px;
+            height: 18px;
+        }
+
+        /* Subtítulo */
+        .section-title {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            font-weight: 700;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Grid de Módulos */
+        .modules-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 1rem;
+        }
+
+        .module-card {
+            background-color: var(--card-bg);
+            border-radius: var(--radius-main);
+            padding: 1.2rem;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transition: var(--transition);
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .module-card:hover {
+            transform: translateY(-3px);
+            border-color: var(--primary-color);
+            box-shadow: 0 8px 18px rgba(0, 135, 82, 0.08);
+        }
+
+        .module-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 0.6rem;
+        }
+
+        .module-icon {
+            width: 38px;
+            height: 38px;
+            background-color: var(--primary-light);
+            color: var(--primary-color);
+            border-radius: var(--radius-inner);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .module-icon i {
+            width: 20px;
+            height: 20px;
+        }
+
+        .module-header h3 {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .module-desc {
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            line-height: 1.4;
+            margin-bottom: 1rem;
+        }
+
+        .module-action {
+            display: inline-flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            padding: 0.55rem 0.8rem;
+            background-color: var(--input-bg);
+            color: var(--text-main);
+            font-weight: 600;
+            font-size: 0.8rem;
+            border-radius: var(--radius-inner);
+            transition: var(--transition);
+        }
+
+        .module-card:hover .module-action {
+            background-color: var(--primary-color);
+            color: #ffffff;
+        }
+
+        .no-results {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 2.5rem 1rem;
+            background: var(--card-bg);
+            border-radius: var(--radius-main);
+            border: 1px dashed var(--border-color);
+            color: var(--text-muted);
+            display: none;
+        }
+
+        /* Pie de página sencillo */
+        footer {
+            background-color: var(--card-bg);
+            border-top: 1px solid var(--border-color);
+            padding: 0.85rem;
+            text-align: center;
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            margin-top: auto;
+        }
+
+        @media (max-width: 600px) {
+            .modules-grid {
+                grid-template-columns: 1fr;
+            }
+            .hero-card {
+                padding: 1.1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="top-accent"></div>
+
+    <!-- Encabezado Simple -->
+    <header>
+        <div class="header-container">
+            <a href="index.html" class="brand">
+                <div class="brand-logo">LOGO</div>
+                <div class="brand-title">
+                    <h1>Portal de <span>Servicios</span></h1>
+                    <p>Acceso centralizado</p>
+                </div>
+            </a>
+        </div>
+    </header>
+
+    <!-- Contenido Principal -->
+    <main>
+        <div class="hero-card">
+            <h2>Herramientas Disponibles</h2>
+            <p>Seleccione el sistema o módulo al que desea ingresar.</p>
+            <div class="search-box">
+                <i data-lucide="search"></i>
+                <input type="text" id="searchInput" placeholder="Buscar herramienta por nombre o descripción...">
+            </div>
+        </div>
+
+        <div class="section-title">
+            <i data-lucide="layout-grid" style="width: 16px; height: 16px;"></i>
+            <span>Módulos del Sistema</span>
+        </div>
+
+        <!-- Módulos dinámicos desde JS -->
+        <div class="modules-grid" id="modulesGrid"></div>
+
+        <!-- Mensaje de Búsqueda Vacía -->
+        <div class="no-results" id="noResults">
+            <i data-lucide="folder-search" style="width: 36px; height: 36px; margin-bottom: 0.4rem; opacity: 0.5;"></i>
+            <p>No se encontraron herramientas con los términos ingresados.</p>
+        </div>
+    </main>
+
+    <footer>
+        <p>© 2026 COOMPAU — Todos los derechos reservados.</p>
+    </footer>
+
+    <script>
+        /* ==========================================================================
+           ARRAY DE MÓDULOS / HERRAMIENTAS
+           Agrega, quita o edita aquí las opciones que se mostrarán en pantalla.
+           Todos los archivos .html deben estar en la misma carpeta que index.html.
+           ========================================================================== */
+        const modulos = [
+            {
+                titulo: "Simulador de Crédito",
+                descripcion: "Cálculo de cuota fija, seguro de vida y aportes en tiempo real.",
+                ruta: "simulador_credito_v0.2.html",
+                icono: "calculator"
+            },
+            {
+                titulo: "Evaluador de credito",
+                descripcion: "Generación de informes de gestión y métricas consolidadas.",
+                ruta: "evaluador_credito_0.1.html",
+                icono: "file-text"
+            },
+            {
+                titulo: "Recibo Manual",
+                descripcion: "Contacto e información telefónica de las dependencias.",
+                ruta: "recibo_0.1.html",
+                icono: "phone-call"
+            }
+          
+        ];
+
+        /* ==========================================================================
+           RENDERIZADO AUTOMÁTICO EN LA GRILLA
+           ========================================================================== */
+        function renderModules() {
+            const grid = document.getElementById('modulesGrid');
+            grid.innerHTML = '';
+
+            modulos.forEach(item => {
+                const card = document.createElement('a');
+                card.href = item.ruta;
+                card.className = 'module-card';
+                card.setAttribute('data-search', `${item.titulo.toLowerCase()} ${item.descripcion.toLowerCase()}`);
+                
+                card.innerHTML = `
+                    <div>
+                        <div class="module-header">
+                            <div class="module-icon">
+                                <i data-lucide="${item.icono}"></i>
+                            </div>
+                            <h3>${item.titulo}</h3>
+                        </div>
+                        <p class="module-desc">${item.descripcion}</p>
+                    </div>
+                    <div class="module-action">
+                        <span>Ingresar</span>
+                        <i data-lucide="arrow-right" style="width: 15px; height: 15px;"></i>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+
+            // Inicializa los íconos Lucide
+            lucide.createIcons();
+        }
+
+        /* ==========================================================================
+           FILTRO DE BÚSQUEDA
+           ========================================================================== */
+        const searchInput = document.getElementById('searchInput');
+        const noResults = document.getElementById('noResults');
+
+        searchInput.addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase().trim();
+            const cards = document.querySelectorAll('.module-card');
+            let matchCount = 0;
+
+            cards.forEach(card => {
+                const searchData = card.getAttribute('data-search');
+                if (searchData.includes(query)) {
+                    card.style.display = 'flex';
+                    matchCount++;
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+
+            noResults.style.display = (matchCount === 0 && cards.length > 0) ? 'block' : 'none';
+        });
+
+        document.addEventListener('DOMContentLoaded', renderModules);
+    </script>
+</body>
+</html>

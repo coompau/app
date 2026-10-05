@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recibo POS - COOMPAU (Con Márgenes)</title>
+    <style>
+        :root {
+            /* Rollo de 76mm: Dejamos 66mm de área interna y 3mm de margen a cada lado */
+            --pos-width: 76mm;
+            --margin-side: 3mm;
+        }
+
+        @page {
+            size: 76mm auto;
+            margin: 0; /* Controlamos los márgenes por CSS interno para evitar descuadres en driver POS */
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-print-color-adjust: exact;
+        }
+
+        body {
+            /* Fuente ultra gruesa para cabezal térmico de 203 DPI */
+            font-family: 'Arial Black', Gadget, sans-serif;
+            font-size: 12.5px;
+            font-weight: 900;
+            color: #000;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 10px 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .no-print {
+            background: #fff;
+            padding: 12px 18px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+            margin-bottom: 15px;
+            text-align: center;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn {
+            border: none;
+            padding: 10px 18px;
+            font-size: 14px;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .btn-print { background: #068b4e; color: white; }
+        .btn-new { background: #1a3a5a; color: white; }
+
+        /* Contenedor Principal del Recibo POS */
+        #receipt {
+            width: var(--pos-width);
+            background: #fff;
+            /* MARGEN DE SEGURIDAD LATERALE (IZQUIERDA Y DERECHA) */
+            padding-top: 4mm;
+            padding-bottom: 6mm;
+            padding-left: var(--margin-side);
+            padding-right: var(--margin-side);
+            box-shadow: 0 0 5px rgba(0,0,0,0.2);
+        }
+
+        /* Encabezado */
+        .header {
+            text-align: center;
+            border-bottom: 3px solid #000;
+            padding-bottom: 6px;
+            margin-bottom: 8px;
+        }
+
+        .pos-logo {
+            max-width: 90px;
+            height: auto;
+            margin-bottom: 4px;
+            filter: contrast(250%) grayscale(100%);
+        }
+
+        .contingency-badge {
+            border: 2px solid #000;
+            font-weight: 900;
+            font-size: 11px;
+            margin: 6px 0 2px 0;
+            padding: 3px 2px;
+            display: block;
+            text-align: center;
+            background: #000;
+            color: #fff;
+        }
+
+        /* Filas y Campos de Entrada */
+        .row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 4px;
+            gap: 2px;
+        }
+
+        .label {
+            font-weight: 900;
+            white-space: nowrap;
+            font-size: 11.5px;
+            text-transform: uppercase;
+            display: block;
+        }
+
+        /* TEXTAREA MULTILÍNEA PARA EVITAR QUE EL NOMBRE SE CORTE */
+        textarea.editable-multiline {
+            width: 100%;
+            font-family: 'Arial Black', Gadget, sans-serif;
+            font-size: 12.5px;
+            font-weight: 900;
+            border: none;
+            border-bottom: 2px solid #000;
+            background: transparent;
+            outline: none;
+            color: #000;
+            resize: none;
+            overflow: hidden;
+            text-transform: uppercase;
+            line-height: 1.2;
+            margin-top: 1px;
+            margin-bottom: 3px;
+            display: block;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        input, select {
+            font-family: 'Arial Black', Gadget, sans-serif;
+            font-size: 12px;
+            font-weight: 900;
+            border: none;
+            border-bottom: 2px solid #000;
+            background: transparent;
+            outline: none;
+            color: #000;
+            padding: 1px 0;
+        }
+
+        .text-right {
+            text-align: right;
+        }
+
+        .divider {
+            border-top: 3px solid #000;
+            margin: 6px 0;
+        }
+
+        .divider-dashed {
+            border-top: 2px dashed #000;
+            margin: 6px 0;
+        }
+
+        .big-amount {
+            font-size: 17px;
+            font-weight: 900;
+            width: 120px;
+        }
+
+        /* Firmas y Huella */
+        .signature-section {
+            margin-top: 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+        }
+
+        .sig-line {
+            border-top: 2px solid #000;
+            width: 58%;
+            text-align: center;
+            font-size: 9.5px;
+            font-weight: 900;
+            padding-top: 3px;
+            text-transform: uppercase;
+        }
+
+        .fingerprint-box {
+            width: 44px;
+            height: 54px;
+            border: 2px solid #000;
+            text-align: center;
+            font-size: 8.5px;
+            font-weight: 900;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-transform: uppercase;
+        }
+
+        .legal-notice {
+            font-size: 9px;
+            font-weight: 900;
+            text-align: center;
+            margin-top: 8px;
+            text-transform: uppercase;
+            line-height: 1.2;
+        }
+
+        /* Impresión POS */
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+            body {
+                background: none;
+                padding: 0;
+                margin: 0;
+            }
+            #receipt {
+                box-shadow: none;
+                width: var(--pos-width);
+                padding-top: 2mm;
+                padding-bottom: 5mm;
+                padding-left: var(--margin-side);
+                padding-right: var(--margin-side);
+            }
+            .contingency-badge {
+                background: #000 !important;
+                color: #fff !important;
+            }
+            input, select, textarea {
+                border-bottom: none !important;
+            }
+            select {
+                -webkit-appearance: none;
+                -moz-appearance: none;
+                appearance: none;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="no-print">
+         <button class="btn btn-print" style="background: #555;" onclick="window.location.href='index.html';" >↩️​ Ir atras</button>
+        <button class="btn btn-print"  onclick="imprimirYRegistrar()">🖨️ IMPRIMIR COMPROBANTE</button>
+        <button class="btn btn-new" onclick="nuevoRecibo()" >✨ NUEVO RECIBO</button>
+    </div>
+
+    <div id="receipt">
+        <!-- Encabezado con Logo -->
+        <div class="header">
+            <img src="./logo.png" alt="Logo COOMPAU" class="pos-logo"><br>
+            <strong style="font-size: 15px;">COOMPAU</strong><br>
+            <span style="font-size: 9px;">COOPERATIVA MULTIACTIVA DE EL PAUJIL</span><br>
+            <span style="font-size: 8.5px;">NIT: 800077768-0 | SUPERSOLIDARIA</span>
+            
+            <div class="contingency-badge">*** COMPROBANTE MANUAL ***</div>
+            <span style="font-size: 8px;">CONTINGENCIA POR FALLA DE SISTEMA</span>
+        </div>
+
+        <!-- Fecha, Consecutivo y Cajero -->
+        <div class="row">
+            <span class="label">FECHA/HORA:</span>
+            <input type="datetime-local" id="fecha_hora_input" style="font-size: 10.5px; font-weight: 900; width: 140px;">
+        </div>
+        <div class="row">
+            <span class="label">N° CONTROL:</span>
+            <input type="text" id="num_control" readonly class="text-right" style="font-weight: 900; font-size: 13.5px; width: 95px; border: none;">
+        </div>
+        <div class="row">
+            <span class="label">OFICINA:</span>
+            <input type="text" value="EL PAUJIL" class="text-right" style="width: 105px; font-weight: 900;">
+        </div>
+        
+        <!-- CAJERO CON MULTILÍNEA -->
+        <div style="margin-top: 5px;">
+            <span class="label">CAJERO(A):</span>
+            <textarea id="nombre_cajero" rows="1" class="editable-multiline" placeholder="NOMBRE COMPLETO DEL CAJERO" oninput="autoAjustarTextarea(this); guardarCajero(this.value);"></textarea>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- CLIENTE CON MULTILÍNEA -->
+        <div>
+            <span class="label">CLIENTE / ASOCIADO:</span>
+            <textarea id="nombre_cliente" rows="1" class="editable-multiline" placeholder="APELLIDOS Y NOMBRES COMPLETOS" oninput="autoAjustarTextarea(this)"></textarea>
+        </div>
+
+        <div class="row" style="margin-top: 3px;">
+            <span class="label">DOCUMENTO:</span>
+            <input type="text" id="doc_cliente" placeholder="C.C. / NIT" class="text-right" style="width: 120px; font-size: 12px;">
+        </div>
+
+        <div class="divider-dashed"></div>
+
+        <!-- Tipo de Transacción -->
+        <div class="row">
+            <span class="label">OPERACIÓN:</span>
+            <select id="tipo_operacion" style="font-weight: 900; font-size: 12px; text-align-last: right;">
+                <option value="PAGO">PAGO / INGRESO (+)</option>
+                <option value="RETIRO">RETIRO / EGRESO (-)</option>
+            </select>
+        </div>
+
+        <div style="margin-top: 3px;">
+            <span class="label">CONCEPTO:</span>
+            <textarea id="concepto" rows="1" class="editable-multiline" placeholder="DESCRIPCIÓN DEL PAGO O RETIRO" oninput="autoAjustarTextarea(this)">PAGO CRÉDITO CAJA</textarea>
+        </div>
+
+        <div class="divider-dashed"></div>
+
+        <!-- Valores de Caja -->
+        <div class="row" style="margin: 5px 0;">
+            <span class="label" style="font-size: 14px;">VALOR TOTAL:</span>
+            <span>$ <input type="text" id="valor_total" value="0" class="text-right big-amount" oninput="formatearMiles(this)"></span>
+        </div>
+
+        <div class="row">
+            <span class="label">EFECTIVO:</span>
+            <span>$ <input type="text" id="efectivo" value="0" class="text-right" style="width: 100px; font-size: 12px;" oninput="formatearMiles(this)"></span>
+        </div>
+        <div class="row">
+            <span class="label">CAMBIO:</span>
+            <span>$ <input type="text" id="cambio" value="0" class="text-right" style="width: 100px; font-size: 12px;" oninput="formatearMiles(this)"></span>
+        </div>
+
+        <div class="divider"></div>
+
+        <div>
+            <span class="label">OBSERVACIONES:</span>
+            <textarea id="observaciones" rows="1" class="editable-multiline" placeholder="NINGUNA" style="font-size: 10.5px;" oninput="autoAjustarTextarea(this)"></textarea>
+        </div>
+
+        <!-- Firma y Huella -->
+        <div class="signature-section">
+            <div class="sig-line">
+                FIRMA DEL CLIENTE<br>
+                C.C.
+            </div>
+            <div class="fingerprint-box">
+                HUELLA
+            </div>
+        </div>
+
+        <!-- Validez -->
+        <div class="legal-notice">
+            <div class="divider-dashed"></div>
+            ESTE COMPROBANTE MANUAL TIENE PLENA VALIDEZ INSTITUCIONAL Y SERÁ ASENTADO EN EL SISTEMA POSTERIORMENTE.
+            <br><br>
+            <strong>COOMPAU - "SERVIMOS COOPERATIVAMENTE"</strong>
+        </div>
+    </div>
+
+    <script>
+        function autoAjustarTextarea(element) {
+            element.style.height = 'auto';
+            element.style.height = element.scrollHeight + 'px';
+        }
+
+        document.addEventListener('keydown', function(e) {
+            if ((e.ctrlKey || e.metaKey) && (e.key === 'p' || e.key === 'P')) {
+                e.preventDefault();
+                alert("⚠️ Use el botón 'IMPRIMIR COMPROBANTE' para mantener el consecutivo ordenado.");
+            }
+        });
+
+        function setFechaHoraSistema() {
+            const now = new Date();
+            now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+            document.getElementById('fecha_hora_input').value = now.toISOString().slice(0, 16);
+        }
+
+        function cargarCajero() {
+            const cajeroGuardado = localStorage.getItem('coompau_cajero');
+            if (cajeroGuardado) {
+                const el = document.getElementById('nombre_cajero');
+                el.value = cajeroGuardado;
+                autoAjustarTextarea(el);
+            }
+        }
+
+        function guardarCajero(val) {
+            localStorage.setItem('coompau_cajero', val.toUpperCase());
+        }
+
+        function obtenerConsecutivo() {
+            let actual = localStorage.getItem('coompau_man_seq');
+            if (!actual) {
+                actual = 1;
+                localStorage.setItem('coompau_man_seq', actual);
+            }
+            const numFormateado = "MAN-" + String(actual).padStart(3, '0');
+            document.getElementById('num_control').value = numFormateado;
+        }
+
+        function incrementarConsecutivo() {
+            let actual = parseInt(localStorage.getItem('coompau_man_seq')) || 1;
+            actual += 1;
+            localStorage.setItem('coompau_man_seq', actual);
+            obtenerConsecutivo();
+        }
+
+        function formatearMiles(input) {
+            let valor = input.value.replace(/\D/g, "");
+            if (valor === "") {
+                input.value = "0";
+            } else {
+                input.value = Number(valor).toLocaleString("es-CO");
+            }
+        }
+
+        function imprimirYRegistrar() {
+            window.print();
+        }
+
+        function nuevoRecibo() {
+            if (confirm("¿Desea avanzar el consecutivo y limpiar el recibo?")) {
+                incrementarConsecutivo();
+                setFechaHoraSistema();
+                
+                const cliente = document.getElementById('nombre_cliente');
+                cliente.value = "";
+                autoAjustarTextarea(cliente);
+
+                document.getElementById('doc_cliente').value = "";
+                
+                const concepto = document.getElementById('concepto');
+                concepto.value = "PAGO CRÉDITO CAJA";
+                autoAjustarTextarea(concepto);
+
+                document.getElementById('valor_total').value = "0";
+                document.getElementById('efectivo').value = "0";
+                document.getElementById('cambio').value = "0";
+                
+                const obs = document.getElementById('observaciones');
+                obs.value = "";
+                autoAjustarTextarea(obs);
+
+                document.getElementById('tipo_operacion').selectedIndex = 0;
+            }
+        }
+
+        window.onload = function() {
+            setFechaHoraSistema();
+            cargarCajero();
+            obtenerConsecutivo();
+            
+            document.querySelectorAll('.editable-multiline').forEach(el => autoAjustarTextarea(el));
+        };
+    </script>
+</body>
+</html>

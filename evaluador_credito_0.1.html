@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Evaluación Capacidad de Pago y Solvencia - COOMPAU</title>
+    <style>
+        :root { --primary: #068b4e; --secondary: #1a3a5a; --accent: #27ae60; --warning: #f39c12; --danger: #c0392b; }
+        @page { size: letter; margin: 0.5cm; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f4f7f6; margin: 0; padding: 5px; font-size: 9.5px; color: #333; }
+        #printable-area { background: white; width: 200mm; min-height: 255mm; margin: auto; padding: 8mm 10mm; box-sizing: border-box; border: 1px solid #eee; display: flex; flex-direction: column; justify-content: space-between; }
+        
+        .header { display: flex; align-items: center; border-bottom: 2.5px solid var(--primary); padding-bottom: 6px; margin-bottom: 8px; }
+        .logo-img { width: 95px; height: 50px; object-fit: contain; margin-right: 12px; }
+        .entity-info { flex: 1; }
+        .entity-info h1 { margin: 0; font-size: 1.1rem; color: var(--primary); text-transform: uppercase; line-height: 1.1; }
+        .entity-info p { margin: 2px 0; font-size: 0.68rem; color: #444; font-weight: bold; letter-spacing: 0.3px; }
+        
+        .header-doc-info { font-size: 0.65rem; color: #444; border-left: 1px solid #ccc; padding-left: 10px; margin-left: 10px; line-height: 1.3; text-align: right; }
+        .header-doc-info div { white-space: nowrap; }
+
+        h2 { text-align: center; color: var(--secondary); text-transform: uppercase; font-size: 0.85rem; margin: 6px 0; background: #f0f0f0; padding: 5px; border-radius: 3px; }
+        .section-title { background: var(--primary); color: white; padding: 4px 8px; font-weight: bold; margin-top: 10px; font-size: 0.78rem; text-transform: uppercase; }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 4px; table-layout: fixed; }
+        th, td { border: 1px solid #bbb; padding: 5px 6px; text-align: left; overflow: hidden; font-size: 9.5px; }
+        th { background: #f7f7f7; color: #333; font-size: 0.75rem; }
+        
+        .full-width-input { width: 100%; font-weight: bold; font-size: 10px; text-transform: uppercase; }
+        input, select { border: none; outline: none; font-family: inherit; font-size: 9.5px; width: 100%; background: transparent; }
+        select { cursor: pointer; background: #fff; border: 1px solid #ccc; border-radius: 2px; padding: 1px 2px; }
+        .val-input { text-align: right; font-weight: bold; font-size: 10px; color: #000; }
+        .readonly-input { background-color: #f2f2f2; color: #555; cursor: not-allowed; }
+        
+        .result-container { display: grid; grid-template-columns: 1fr 110px; gap: 8px; margin-top: 10px; border: 2px solid var(--secondary); border-radius: 5px; padding: 10px; background: #fafafa; }
+        .status-text p { margin: 3px 0; font-size: 0.82rem; }
+        .emoji-status { font-size: 3.2rem; text-align: center; display: flex; align-items: center; justify-content: center; border-left: 1px solid #ddd; }
+        
+        .negative { color: var(--danger); font-weight: bold; }
+        .positive { color: var(--accent); font-weight: bold; }
+        
+        .footer-legal { font-size: 8px; color: #555; margin-top: 10px; text-align: justify; line-height: 1.15; padding: 5px; border: 1px dashed #ccc; }
+        .signatures { margin-top: 45px; display: flex; justify-content: space-between; margin-bottom: 10px; gap: 10px; }
+        .sig-box { flex: 1; border-top: 1.5px solid #000; text-align: center; font-size: 8.5px; padding-top: 4px; font-weight: bold; text-transform: uppercase; }
+        
+        .no-print { text-align: center; margin-bottom: 8px; background: #fff; padding: 8px; border-bottom: 1px solid #ddd; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+        .btn-print { background: var(--primary); color: white; border: none; padding: 6px 20px; cursor: pointer; border-radius: 4px; font-weight: bold; font-size: 13px; }
+       
+        .config-bar { display: flex; align-items: center; gap: 8px; background: #eef5f0; padding: 4px 12px; border-radius: 4px; border: 1px solid var(--primary); font-size: 11px; font-weight: bold; color: var(--secondary); }
+        .config-bar input { width: 50px; text-align: center; background: #fff; border: 1px solid #ccc; border-radius: 3px; padding: 2px; font-weight: bold; color: var(--primary); }
+        
+        @media print { 
+            .no-print { display: none !important; } 
+            body { padding: 0; background: white; } 
+            #printable-area { border: none; width: 100%; min-height: 100vh; padding: 0; justify-content: space-between; } 
+            select { border: none; -webkit-appearance: none; -moz-appearance: none; appearance: none; background: transparent; padding: 0; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="no-print">
+        <button class="btn-print" onclick="window.print()">🖨️ IMPRIMIR FORMATO COOMPAU</button>
+        <div class="config-bar">
+             <button class="btn-print" style="background: #555;" onclick="window.location.href='index.html';">↩️​Ir atras</button>
+            <label for="pct_gasto_fam">% Gastos Familiares por defecto:</label>
+            <input type="number" id="pct_gasto_fam" value="35" min="0" max="100" step="1" oninput="calcular()"> %
+        </div>
+        <p style="font-size: 11px; color: #666; margin: 0;">Analizador de Riesgo COOMPAU v3- Formato Vertical Carta (RC-007)</p>
+    </div>
+
+    <div id="printable-area">
+        <div>
+            <div class="header">
+                <img src="./logo.png" alt="Logo COOMPAU" class="logo-img">
+                <div class="entity-info">
+                    <h1>COOPERATIVA MULTIACTIVA DE EL PAUJIL "COOMPAU"</h1>
+                    <p>NIT: 800077768-0 | VIGILADO SUPERSOLIDARIA</p>
+                    <p>SISTEMA DE ADMINISTRACIÓN DE RIESGO DE CRÉDITO (SARC) - REGLAMENTO RC-008</p>
+                </div>
+                <div class="header-doc-info">
+                    <div><strong>Código:</strong> FT020</div>
+                    <div><strong>Versión:</strong> 03</div>
+                    <div><strong>Fecha:</strong> 26/03/2026</div>
+                </div>
+            </div>
+
+            <h2>Formato para el analisis de viabilidad-otorgamiento de credito </h2>
+
+            <div class="section-title">1. DATOS GENERALES DEL SOLICITANTE</div>
+            <table style="width: 100%; border-collapse: collapse; font-family: sans-serif; font-size: 0.9rem;">
+    <tr>
+        <th style="width: 15%; text-align: left; padding: 6px;">Nombre:</th>
+        <td style="width: 45%; padding: 6px;">
+            <input type="text" class="full-width-input" placeholder="APELLIDOS Y NOMBRES COMPLETOS" style="width: 100%; padding: 6px; box-sizing: border-box;">
+        </td>
+        <th style="width: 15%; text-align: left; padding: 6px;">Rol:</th>
+        <td style="width: 25%; padding: 6px;">
+            <select id="tipo_rol" style="width: 100%; font-weight: bold; padding: 6px;">
+                <option value="Deudor" selected>Deudor</option>
+                <option value="Codeudor">Codeudor</option>
+            </select>
+        </td>
+    </tr>
+    <tr>
+        <th style="text-align: left; padding: 6px;">Documento:</th>
+        <td style="padding: 6px;">
+            <div style="display: flex; gap: 6px;">
+                <select id="tipo_doc" style="width: 35%; font-weight: bold; padding: 6px;">
+                    <option value="CC" selected>C.C.</option>
+                    <option value="NIT">NIT</option>
+                    <option value="CE">C.E.</option>
+                    <option value="PAS">Pasaporte</option>
+                    <option value="PEP">PEP</option>
+                    <option value="PPT">PPT</option>
+                </select>
+                <input type="text" placeholder="Número de Documento" style="width: 65%; padding: 6px; box-sizing: border-box;">
+            </div>
+        </td>
+        <th style="text-align: left; padding: 6px;">Ocupación:</th>
+        <td style="padding: 6px;">
+            <select id="tipo_ocupacion" style="width: 100%; font-weight: bold; padding: 6px;">
+                <option value="Empleado" selected>Empleado</option>
+                <option value="Independiente">Independiente</option>
+                <option value="Pensionado">Pensionado</option>
+                <option value="Comerciante">Comerciante</option>
+                <option value="Agricultor/Ganadero">Agricultor / Ganadero</option>
+                <option value="Prestador de Servicios">Prestador de Servicios</option>
+                <option value="Ama de Casa">Ama de Casa</option>
+                <option value="Estudiante">Estudiante</option>
+            </select>
+        </td>
+    </tr>
+    <tr>
+        <th style="text-align: left; padding: 6px;">Fecha:</th>
+        <td style="padding: 6px;">
+            <input type="date" value="2026-03-26" style="width: 100%; font-weight: bold; padding: 6px; box-sizing: border-box;">
+        </td>
+        <th style="text-align: left; padding: 6px;">Monto solicitado:</th>
+        <td style="padding: 6px;">
+            <div style="display: flex; align-items: center; background-color: #f9f9f9; border: 1px solid #ccc; border-radius: 4px; padding-left: 8px;">
+                <span style="font-weight: bold; color: #555; margin-right: 4px;">$</span>
+                <input type="number" placeholder="0" style="width: 100%; border: none; background: transparent; padding: 6px; font-weight: bold; outline: none;">
+            </div>
+        </td>
+    </tr>
+</table>
+
+            <div class="section-title">2. INFORMACIÓN FINANCIERA MENSUAL (INGRESOS Y EGRESOS)</div>
+            <table>
+                <tr>
+                    <th colspan="2" style="text-align: center; background: #eef5f0; color: var(--primary);">INGRESOS MENSUALES</th>
+                    <th colspan="2" style="text-align: center; background: #fdeeee; color: var(--danger);">EGRESOS MENSUALES</th>
+                </tr>
+                <tr>
+                    <th>Salario Fijo:</th>
+                    <td>$ <input type="text" id="ing_salario_fijo" class="calc format-miles val-input" value="0" style="width:75%"></td>
+                    <th>Gastos Familiares (Alimentación, Salud, etc.):</th>
+                    <td>$ <input type="text" id="egr_familiares" class="val-input readonly-input" value="0" style="width:75%" readonly tabindex="-1"></td>
+                </tr>
+                <tr>
+                    <th>Salario Variable (promedio):</th>
+                    <td>$ <input type="text" id="ing_salario_var" class="calc format-miles val-input" value="0" style="width:75%"></td>
+                    <th>Arrendamiento:</th>
+                    <td>$ <input type="text" id="egr_arriendo" class="calc format-miles val-input" value="0" style="width:75%"></td>
+                </tr>
+                <tr>
+                    <th>Arrendamientos:</th>
+                    <td>$ <input type="text" id="ing_arriendos" class="calc format-miles val-input" value="0" style="width:75%"></td>
+                    <th>Cuota Crédito Hipotecario:</th>
+                    <td>$ <input type="text" id="egr_hipotecario" class="calc format-miles val-input" value="0" style="width:75%"></td>
+                </tr>
+                <tr>
+                    <th>Rendimientos Financieros:</th>
+                    <td>$ <input type="text" id="ing_rendimientos" class="calc format-miles val-input" value="0" style="width:75%"></td>
+                    <th>Otros Créditos o Tarjetas:</th>
+                    <td>$ <input type="text" id="egr_tarjetas" class="calc format-miles val-input" value="0" style="width:75%"></td>
+                </tr>
+                <tr>
+                    <th>Comisiones y Honorarios:</th>
+                    <td>$ <input type="text" id="ing_comisiones" class="calc format-miles val-input" value="0" style="width:75%"></td>
+                    <th>Otros Egresos:</th>
+                    <td>$ <input type="text" id="egr_otros" class="calc format-miles val-input" value="0" style="width:75%"></td>
+                </tr>
+                <tr>
+                    <th>Otros Ingresos:</th>
+                    <td>$ <input type="text" id="ing_otros" class="calc format-miles val-input" value="0" style="width:75%"></td>
+                    <td colspan="2" style="background: #fafafa;"></td>
+                </tr>
+                <tr style="font-weight: bold;">
+                    <td style="background: #eef5f0;">TOTAL INGRESOS (A):</td>
+                    <td id="totalA" style="text-align: right; color: var(--primary); font-size: 10.5px; background: #eef5f0;">$ 0</td>
+                    <td style="background: #fdeeee;">TOTAL EGRESOS (B):</td>
+                    <td id="totalB" style="text-align: right; color: var(--danger); font-size: 10.5px; background: #fdeeee;">$ 0</td>
+                </tr>
+                <tr style="background: #f0f4f8; font-weight: bold;">
+                    <td colspan="2" style="color: var(--secondary);">INGRESO NETO DISPONIBLE (A - B):</td>
+                    <td colspan="2" id="remanenteTabla" style="text-align: center; color: var(--secondary); font-size: 11px;">$ 0</td>
+                </tr>
+            </table>
+            <p style="font-size: 7.5px; color: #555; margin: 2px 0 0 2px; font-style: italic;">
+                * Nota: El valor de la cuota del crédito no podrá superar el 30% del ingreso neto disponible.
+            </p>
+
+            <div class="section-title">3. BALANCE PERSONAL (PATRIMONIAL)</div>
+            <table>
+                <tr>
+                    <th colspan="2" style="text-align: center; background: #eef5f0; color: var(--primary);">ACTIVOS</th>
+                    <th colspan="2" style="text-align: center; background: #fdeeee; color: var(--danger);">PASIVOS</th>
+                </tr>
+                <tr>
+                    <th>Activos Corrientes (Ahorro e inversión):</th>
+                    <td>$ <input type="text" id="act_corrientes" class="calc format-miles val-input" value="0" style="width:75%"></td>
+                    <th>Pasivos Financieros (Deudas bancarias):</th>
+                    <td>$ <input type="text" id="pas_financieros" class="calc format-miles val-input" value="0" style="width:75%"></td>
+                </tr>
+                <tr>
+                    <th>Activos Fijos (Vehículo y propiedades):</th>
+                    <td>$ <input type="text" id="act_fijos" class="calc format-miles val-input" value="0" style="width:75%"></td>
+                    <th>Pasivos Corrientes (Deudas con terceros):</th>
+                    <td>$ <input type="text" id="pas_corrientes" class="calc format-miles val-input" value="0" style="width:75%"></td>
+                </tr>
+                <tr>
+                    <th>Otros Activos:</th>
+                    <td>$ <input type="text" id="act_otros" class="calc format-miles val-input" value="0" style="width:75%"></td>
+                    <th>Otros Pasivos:</th>
+                    <td>$ <input type="text" id="pas_otros" class="calc format-miles val-input" value="0" style="width:75%"></td>
+                </tr>
+                <tr style="font-weight: bold;">
+                    <td style="background: #eef5f0;">TOTAL ACTIVOS:</td>
+                    <td id="totalActivos" style="text-align: right; color: var(--primary); font-size: 10.5px; background: #eef5f0;">$ 0</td>
+                    <td style="background: #fdeeee;">TOTAL PASIVOS:</td>
+                    <td id="totalPasivos" style="text-align: right; color: var(--danger); font-size: 10.5px; background: #fdeeee;">$ 0</td>
+                </tr>
+                <tr style="background: #f0f4f8; font-weight: bold;">
+                    <td colspan="2">TOTAL PATRIMONIO (Activos - Pasivos): <span id="totalPatrimonio" style="color: var(--secondary); font-size: 10px;">$ 0</span></td>
+                    <td colspan="2">ÍNDICE SOLVENCIA (Activos / Pasivos) [Mín 1.2]: <span id="ratioSolvencia" style="font-size: 10px; color: var(--secondary);">0.00</span></td>
+                </tr>
+            </table>
+
+            <div class="section-title">4. DICTAMEN FINAL Y EVALUACIÓN DE RIESGO</div>
+            <div class="result-container" id="box_resultado">
+                <div class="status-text">
+                    <p><strong>Ingreso Neto Disponible (A - B):</strong> <span id="remanente" style="font-weight: bold;">$ 0</span></p>
+                    <p><strong>Valor Cuota Mensual Proyectada:</strong> $ <input type="text" id="cuotaNueva" class="calc format-miles val-input" value="0" style="width:100px; font-size: 11px; border-bottom: 1px solid #333;"> (Máx 30% del disponible)</p>
+                    <div id="dictamen" style="font-size: 0.9rem; margin-top: 5px; font-weight: 900; letter-spacing: 0.3px;">ESPERANDO CÁLCULO</div>
+                </div>
+                <div id="carita" class="emoji-status">😐</div>
+            </div>
+        </div>
+
+        <div>
+            <div class="footer-legal" style="font-size: 12;">
+                <strong>FUNDAMENTO JURÍDICO Y NORMATIVO:</strong> Evaluación según Circular Básica Contable y Financiera (SuperSolidaria) y Reglamento RC-001 (v8). Se evalúa Solvencia ($\text{Activos}/\text{Pasivos} \ge 1.2$) y Capacidad de Pago (Cuota $\le$ 30% del ingreso neto disponible).
+            </div>
+
+            <div class="signatures">
+                <div class="sig-box">Responsable/ Asesor</div>
+                <div class="sig-box">Gerente General / Aprobación</div>
+                <div class="sig-box">Asociado Solicitante </div>
+            </div>
+            <p style="text-align:center; font-size: 8px; color: #999; margin-top: 6px; margin-bottom: 0;">Copia: Archivo Crédito COOMPAU - El Paujil, Caquetá</p>
+        </div>
+    </div>
+
+    <script>
+        function formatNumber(n) {
+            n = n.replace(/\D/g, "");
+            return n === "" ? "0" : Number(n).toLocaleString("es-CO");
+        }
+
+        function getRawValue(id) {
+            const el = document.getElementById(id);
+            if (!el) return 0;
+            return parseFloat(el.value.replace(/\./g, "")) || 0;
+        }
+
+        document.querySelectorAll('.calc').forEach(input => {
+            input.addEventListener('input', (e) => {
+                if(e.target.classList.contains('format-miles')) {
+                    e.target.value = formatNumber(e.target.value);
+                }
+                calcular();
+            });
+        });
+
+        function calcular() {
+            // 1. Ingresos
+            const tA = getRawValue('ing_salario_fijo') + getRawValue('ing_salario_var') + 
+                       getRawValue('ing_arriendos') + getRawValue('ing_rendimientos') + 
+                       getRawValue('ing_comisiones') + getRawValue('ing_otros');
+
+            // 2. Cálculo automático de Gastos Familiares segun % parametrizado
+            const pctConfig = parseFloat(document.getElementById('pct_gasto_fam').value) || 0;
+            const gastoFamCalculado = Math.round(tA * (pctConfig / 100));
+            
+            const egrFamElem = document.getElementById('egr_familiares');
+            egrFamElem.value = gastoFamCalculado.toLocaleString('es-CO');
+
+            // 3. Egresos Totales
+            const tB = gastoFamCalculado + getRawValue('egr_arriendo') + 
+                       getRawValue('egr_hipotecario') + getRawValue('egr_tarjetas') + 
+                       getRawValue('egr_otros');
+
+            // 4. Activos y Pasivos
+            const tActivos = getRawValue('act_corrientes') + getRawValue('act_fijos') + getRawValue('act_otros');
+            const tPasivos = getRawValue('pas_financieros') + getRawValue('pas_corrientes') + getRawValue('pas_otros');
+            const patrimonio = tActivos - tPasivos;
+
+            // 5. Cálculo Solvencia = Activos / Pasivos
+            let ratioSolv = 0;
+            if (tPasivos > 0) {
+                ratioSolv = tActivos / tPasivos;
+            } else if (tActivos > 0 && tPasivos === 0) {
+                ratioSolv = 99.9; // Sin deudas
+            }
+
+            const cuota = getRawValue('cuotaNueva');
+            const remanente = tA - tB;
+
+            // Actualizar vista
+            document.getElementById('totalA').innerText = "$ " + tA.toLocaleString('es-CO');
+            document.getElementById('totalB').innerText = "$ " + tB.toLocaleString('es-CO');
+            document.getElementById('remanenteTabla').innerText = "$ " + remanente.toLocaleString('es-CO');
+            document.getElementById('totalActivos').innerText = "$ " + tActivos.toLocaleString('es-CO');
+            document.getElementById('totalPasivos').innerText = "$ " + tPasivos.toLocaleString('es-CO');
+            document.getElementById('totalPatrimonio').innerText = "$ " + patrimonio.toLocaleString('es-CO');
+            document.getElementById('remanente').innerText = "$ " + remanente.toLocaleString('es-CO');
+
+            const ratioElem = document.getElementById('ratioSolvencia');
+            if (tActivos === 0 && tPasivos === 0) {
+                ratioElem.innerText = "0.00 (SIN DATOS)";
+                ratioElem.style.color = "var(--secondary)";
+            } else {
+                ratioElem.innerText = ratioSolv.toFixed(2) + (ratioSolv >= 1.2 ? " ✓ (CUMPLE)" : " ✗ (INSUFICIENTE)");
+                ratioElem.style.color = ratioSolv >= 1.2 ? "var(--accent)" : "var(--danger)";
+            }
+
+            const dictamen = document.getElementById('dictamen');
+            const carita = document.getElementById('carita');
+            const box = document.getElementById('box_resultado');
+
+            const limiteCuota30 = remanente > 0 ? remanente * 0.30 : 0;
+
+            if (cuota <= 0) {
+                dictamen.innerText = "DIGITE VALOR CUOTA";
+                dictamen.className = "";
+                carita.innerText = "❓";
+                box.style.borderColor = "var(--secondary)";
+            } 
+            // Validar Solvencia (Activos / Pasivos >= 1.2)
+            else if (tActivos > 0 && ratioSolv < 1.2) {
+                dictamen.innerText = "✗ NO VIABLE (SOLVENCIA INSUFICIENTE < 1.2)";
+                dictamen.className = "negative";
+                carita.innerText = "🚫";
+                box.style.borderColor = "var(--danger)";
+            }
+            // Validar Capacidad de Pago (Cuota <= 30% del disponible)
+            else if (cuota > limiteCuota30) {
+                dictamen.innerText = "✗ NO VIABLE (CUOTA SUPERA 30% DEL DISPONIBLE)";
+                dictamen.className = "negative";
+                carita.innerText = "❌";
+                box.style.borderColor = "var(--danger)";
+            } 
+            // Viable
+            else {
+                dictamen.innerText = "✓ VIABLE (CUMPLE CAPACIDAD DE PAGO Y SOLVENCIA)";
+                dictamen.className = "positive";
+                carita.innerText = "✔️";
+                box.style.borderColor = "var(--accent)";
+            }
+        }
+
+        // Ejecutar cálculo inicial para inicializar campos
+        calcular();
+    </script>
+</body>
+</html>
