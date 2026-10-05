@@ -14,18 +14,30 @@
     <link rel="apple-touch-icon" href="icons/icon-192.png">
 
 <!-- Registro del Service Worker -->
-<!-- Registro del Service Worker -->
 <script>
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('sw.js')
         .then(reg => {
-          console.log('Service Worker registrado correctamente');
+          // Escuchar si hay una actualización del Service Worker en el servidor
+          reg.onupdatefound = () => {
+            const installingWorker = reg.installing;
+            installingWorker.onstatechange = () => {
+              if (installingWorker.state === 'installed') {
+                if (navigator.serviceWorker.controller) {
+                  // Notificar que hay nueva versión disponible
+                  console.log('Nueva versión detectada. Actualizando...');
+                  window.location.reload();
+                }
+              }
+            };
+          };
         })
         .catch(err => console.error('Error al registrar Service Worker:', err));
     });
   }
 </script>
+
 
 
 
@@ -372,7 +384,6 @@
            Todos los archivos .html deben estar en la misma carpeta que index.html.
            ========================================================================== */
         const modulos = [
-         [
     {
         titulo: "Simulador de Crédito",
         descripcion: "Cálculo de cuota fija, seguro de vida y aportes en tiempo real.",
@@ -391,9 +402,9 @@
         ruta: "recibo_0.1.html",
         icono: "receipt"
     }
-]
+
           
-        ];
+ ];
 
         /* ==========================================================================
            RENDERIZADO AUTOMÁTICO EN LA GRILLA
