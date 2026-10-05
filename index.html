@@ -14,24 +14,13 @@
     <link rel="apple-touch-icon" href="icons/icon-192.png">
 
 <!-- Registro del Service Worker -->
+<!-- Registro del Service Worker -->
 <script>
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('sw.js')
         .then(reg => {
-          // Escuchar si hay una actualización del Service Worker en el servidor
-          reg.onupdatefound = () => {
-            const installingWorker = reg.installing;
-            installingWorker.onstatechange = () => {
-              if (installingWorker.state === 'installed') {
-                if (navigator.serviceWorker.controller) {
-                  // Notificar que hay nueva versión disponible
-                  console.log('Nueva versión detectada. Actualizando...');
-                  window.location.reload();
-                }
-              }
-            };
-          };
+          console.log('Service Worker registrado correctamente');
         })
         .catch(err => console.error('Error al registrar Service Worker:', err));
     });
